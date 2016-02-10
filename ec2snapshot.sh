@@ -37,7 +37,7 @@ VER=2.1
 # Set working folder to script directory
 script=$(readlink -f "$0")
 scriptPath=$(dirname "$script")
-cd $scriptPath
+cd "$scriptPath" || exit
 
 # Read properties file
 if [ -f "./config/global.properties" ]
@@ -70,29 +70,29 @@ elif [ "$1" = "-m" ]; then
     accounts="$monthlyAccounts"
     logFile="$monthlyLogFile"
     logErr="$monthlyLogErr"
-elif [ -z "$1"]; then
+elif [ -z "$1" ]; then
     echo "You must specify a switch for the desired interval: -q, -h, -d, -m."
     exit 1
 fi
 
 # System wide variables
-export EC2_HOME=$EC2_HOME
-export JAVA_HOME=$JAVA_HOME
-export PATH=$PATH:$EC2_HOME/bin
+export EC2_HOME="$EC2_HOME"
+export JAVA_HOME="$JAVA_HOME"
+export PATH=$PATH:"$EC2_HOME/bin"
 
 
 # IO redirection for logging.
 if [ ! -d "./logs" ]; then
   mkdir ./logs
 fi
-touch $logFile
+touch "$logFile"
 exec 6>&1           # Link file descriptor #6 with stdout.
                     # Saves stdout.
-exec > $logFile     # stdout replaced with file $logFile.
-touch $logErr
+exec > "$logFile"     # stdout replaced with file $logFile.
+touch "$logErr"
 exec 7>&2           # Link file descriptor #7 with stderr.
                     # Saves stderr.
-exec 2> $logErr     # stderr replaced with file $logErr.
+exec 2> "$logErr"     # stderr replaced with file $logErr.
         
 
 # Print details
@@ -106,7 +106,7 @@ echo To verify the snapshot process, login to the Amazon EC2 Console.
 echo
 echo ======================================================================
 echo
-echo $interval Backup Start Time `date`
+echo $interval Backup Start Time "$(date)"
 echo ======================================================================
 
 # Loop through all Amazon accounts (tags)
@@ -119,12 +119,12 @@ do
         IFS=$OLDIFS
         
         echo
-        echo Processing Amazon Account: ${AC[0]} for Region: ${AC[1]}
+        echo Processing Amazon Account: "${AC[0]}" for Region: "${AC[1]}"
         echo --------------------------------------------------------------
         counter=0
 
         # Read and set parameters for account and selected interval
-        . $scriptPath/config/${AC[0]}/${AC[0]}.properties
+        . "$scriptPath"/config/"${AC[0]}"/"${AC[0]}".properties
 
         if [ "$interval" = "Quarter-hourly" ]; then
             backupTag="$qhourlyBackupTag"
@@ -162,27 +162,27 @@ do
                 if [[ $VOLINCLUDE == *$s* ]]
                 then
                   for ((i=0; i<${#VOLINCLUDE[@]}; i++)) do
-                    echo Initiating snapshot for volume: ${VOLINCLUDE[i]} ;
-                    ec2-create-snapshot ${VOLINCLUDE[i]} -d $description
-                    counter=`expr $counter + 1`
+                    echo Initiating snapshot for volume: "${VOLINCLUDE[i]}" ;
+                    ec2-create-snapshot "${VOLINCLUDE[i]}" -d "$description"
+                    counter=$((counter +1 ))
                   done                  
             	else
                         echo "$s is excluded!";
                 fi
         done;
-        echo $counter Snapshots initiated for $ac Amazon Servers.
+        echo $counter Snapshots initiated for "$ac" Amazon Servers.
         echo
         echo Cleaning up old snapshots...
         # Count the volumes attached to instances with the specified tag (allows for instances with multiple volumes)
         countVolumes=$(ec2-describe-instances --filter "tag:backup.daily=yes" | grep "BLOCKDEVICE" | cut -f3 | wc -l)
         # Calculates the number of snapshots to remove to maintain the number of snapshots kept per instance
-        snapshotsToRemove=$(($snapshotsKept * $countVolumes))
+        snapshotsToRemove=$((snapshotsKept * countVolumes))
         ec2-describe-snapshots | sort -r -k 5 | grep "$description" | sed 1,"$snapshotsToRemove"d | awk '{print "Deleting snapshot: " $2}; system("ec2-delete-snapshot " $2)'
         echo Clean up done.
 done
 
 echo
-echo $interval Backup End `date`
+echo $interval Backup End "$(date)"
 echo ======================================================================
 
 #Clean up IO redirection
@@ -191,21 +191,21 @@ exec 1>&7 7>&-      # Restore stdout and close file descriptor #7.
 
 if   [ "$mailContent" = "log" ]
 then
-        cat "$logFile" | mail -s "Amazon EC2 Snapshot $interval Backup Log - $dateFormat" $mailAddress
+        cat "$logFile" | mail -s "Amazon EC2 Snapshot $interval Backup Log - '$dateFormat'" "$mailAddress"
         if [ -s "$logErr" ]
                 then
-                        cat "$logErr" | mail -s "ERRORS REPORTED: Amazon EC2 Snapshot $interval Backup Error Log - $dateFormat" $mailAddress
+                        cat "$logErr" | mail -s "ERRORS REPORTED: Amazon EC2 Snapshot $interval Backup Error Log - '$dateFormat'" "$mailAddress"
         fi
 elif [ "$mailContent" = "quiet" ]
 then
         if [ -s "$logErr" ]
                 then
-                        cat "$logErr" | mail -s "ERRORS REPORTED: Amazon EC2 Snapshot $interval Backup Error Log - $dateFormat" $mailAddress
-                        cat "$logFile" | mail -s "Amazon EC2 Snapshot $interval Backup Log - $dateFormat" $mailAddress
+                        cat "$logErr" | mail -s "ERRORS REPORTED: Amazon EC2 Snapshot $interval Backup Error Log - '$dateFormat'" "$mailAddress"
+                        cat "$logFile" | mail -s "Amazon EC2 Snapshot $interval Backup Log - '$dateFormat'" "$mailAddress"
         fi
 elif [ "$mailContent" = "loginone" ]
 then
-        cat "$logFile" "$logErr" | mail -s "Amazon EC2 Snapshot $interval Backup Log - $dateFormat" $mailAddress
+        cat "$logFile" "$logErr" | mail -s "Amazon EC2 Snapshot $interval Backup Log - '$dateFormat'" "$mailAddress"
 else
         if [ -s "$logErr" ]
                 then

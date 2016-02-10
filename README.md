@@ -2,7 +2,8 @@
 A script to create snapshot backups of all volumes attached to tagged EC2 instances, supporting multiple accounts with individual retention rules per snapshot interval.
 
 ## Overview
-This script, in conjunction with a scheduler (e.g. cron) will create a snapshot for each volume attached to tagged EC2 instances. Multiple AWS accounts are supported; the script will recurse through all configured accounts. After snapshots are created, retention rules are applied, and the oldest snapshots are removed to maintain the configured number of snapshots per instance for that interval, regardless of the number of volumes attached to each instance.  
+This script, in conjunction with a scheduler (e.g. cron) will create a snapshot for each volume attached to tagged EC2 instances. Multiple AWS accounts are supported; the script will recurse through all configured accounts. After snapshots are created, retention rules are applied, and the oldest snapshots are removed to maintain the configured number of snapshots per instance for that interval, regardless of the number of volumes attached to each instance.
+
 The script supports quarter-hourly, hourly, daily and monthly snapshot intervals by default, however these can be easily modified. Instances can be tagged with any combination of intervals, allowing some instances to be backed up more frequently than others. The output of the script is redirected to a log file, and an email report can be configured if desired.
 
 ## Version history
