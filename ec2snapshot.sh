@@ -2,7 +2,7 @@
 #
 # Amazon EC2 Instance Snapshot Script
 # http://www.allette.com.au
-# Copyright (c) 2015 Allette Systems, Australia
+# Copyright (c) 2016 Allette Systems, Australia
 #
 # More details can be found at the Amazon EC2 Developer site
 # http://aws.amazon.com/documentation/ec2/
@@ -25,12 +25,14 @@
 #   Add Volume Include support
 # VER 1.6 - (2015-11-27)
 #   Change Volume Include source to a tag:value pair, removed volume exclude support.
-# VER 2.0 - (2015-12/02)
-#   Move properties to backup.properties file, all in one script for all backup intervals.
+# VER 2.0 - (2015-12-02)
+#   Move properties to global.properties file, all in one script for all backup intervals.
 #   Snapshots to keep now counted per instance, taking into account multiple volumes.
+# VER 2.1 - (2016-02-10)
+#   Minor spelling corrections, move environment variable path definitions to global.properties.
 
 # Current version of this script
-VER=2.0
+VER=2.1
 
 # Set working folder to script directory
 script=$(readlink -f "$0")
@@ -74,8 +76,8 @@ elif [ -z "$1"]; then
 fi
 
 # System wide variables
-export EC2_HOME=/usr/local/ec2/ec2-api-tools
-export JAVA_HOME=/usr/lib/jvm/jre-1.7.0
+export EC2_HOME=$EC2_HOME
+export JAVA_HOME=$JAVA_HOME
 export PATH=$PATH:$EC2_HOME/bin
 
 
